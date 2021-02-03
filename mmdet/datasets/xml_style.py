@@ -7,7 +7,7 @@ from PIL import Image
 
 from .builder import DATASETS
 from .custom import CustomDataset
-
+import collections
 
 @DATASETS.register_module()
 class XMLDataset(CustomDataset):
@@ -61,6 +61,7 @@ class XMLDataset(CustomDataset):
     def _filter_imgs(self, min_size=32):
         """Filter images too small or without annotation."""
         valid_inds = []
+        uuids = collections.defaultdict(int)
         for i, img_info in enumerate(self.data_infos):
             if min(img_info['width'], img_info['height']) < min_size:
                 continue
@@ -72,11 +73,13 @@ class XMLDataset(CustomDataset):
                 root = tree.getroot()
                 for obj in root.findall('object'):
                     name = obj.find('name').text
+                    uuids[name] += 1
                     if name in self.CLASSES:
                         valid_inds.append(i)
                         break
             else:
                 valid_inds.append(i)
+        # print(len(uuids))
         return valid_inds
 
     def get_ann_info(self, idx):
