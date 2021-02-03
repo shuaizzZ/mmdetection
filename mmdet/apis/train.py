@@ -158,6 +158,7 @@ def trainer_detector(model,
                    timestamp=None,
                    meta=None,
                    runstate=np.array([1])):
+    from mmdet.utils import (CheckRunstateHook, TrainerLogHook, TrainerCheckpointHook)
     logger = get_root_logger(cfg.log_level)
 
     # prepare data loaders
@@ -261,6 +262,10 @@ def trainer_detector(model,
             priority = hook_cfg.pop('priority', 'NORMAL')
             hook = build_from_cfg(hook_cfg, HOOKS)
             runner.register_hook(hook, priority=priority)
+
+    ## register CheckRunstateHook and TrainerLogHook
+    runner.register_hook(CheckRunstateHook(runstate), priority='HIGH')
+    runner.register_hook(TrainerLogHook(cfg.trainer_csv_path, cfg.num_classes), priority='LOW')
 
     if cfg.resume_from:
         runner.resume(cfg.resume_from)
