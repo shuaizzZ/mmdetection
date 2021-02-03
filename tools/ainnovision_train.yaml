@@ -1,0 +1,187 @@
+# -----------------------------------------------------------------------------
+# MODEL
+# -----------------------------------------------------------------------------
+MODEL:
+    ARCHITECTURE: "psp" # psp du_psp deeplabv3_plus bisenet icnet
+    BACKBONE: "resnet18" # resnet18 deepresnet18 densenet121 deepresnet50 xception65
+    PRETRAIN_BACKBONE: True
+    PRETRAINED_DIR: 'encoding/pretrained_models'
+
+    DU_SCALE: 8
+    SPP_SIZE: [2, 4, 8, 16] # [1, 2, 3, 6, 12, 24] [1, 2, 4, 8, 16, 32]
+    DROPOUT2d: 0.5 # 0.1
+
+    CHANNEL_PRUNE_RATIO: 1.0
+
+# -----------------------------------------------------------------------------
+# Dataset
+# -----------------------------------------------------------------------------
+DATASETS:
+#    ROOT: '/root/public02/manuag/zhangshuai/data/ainno-example/bottle_example'
+    ROOT: '/root/public02/manuag/zhangshuai/data/ainno-example/dongci_example'
+#    ROOT: 'D:\work\manuvision-platform\bottle\train'
+    TYPE: "AinnoDataset"   ## YantaiDataset
+    DATASET: "yantai-12_v2345_unq_1008"
+    CLASSES: ['background', 'abnormal'] # liewen , 'quekuai', 'zhazhi', 'pingmianbuping', 'loumo'
+    LABELS: [0, 1, 2]
+    STATIONS: []
+    WORKS: 0
+    INCHANNEL: 3
+#    MEAN: [0.5,0.5,0.5]
+#    STD: [0.5,0.5,0.5]
+    MEAN: [0.485,0.456,0.406]
+    STD: [0.229,0.224,0.225]
+
+    DEFECTSIMULATE:
+        ENABLE: False
+        MODE: [0, 1]
+        NUM: [10, 5, 8, 24]
+        SIZE: [5, 5, 4, 14]
+
+    AUGMENT:
+        TRANSPOSE: [0,1,2,3,4,5,6]
+        # FLIP_LEFT_RIGHT, FLIP_TOP_BOTTOM, ROTATE_90, ROTATE_180, ROTATE_270, TRANSPOSE, TRANSVERSE ==> 0~6
+        CROP_SIZE: [512, 1024]
+        RESIZE_MODE: 1
+        RESIZE_RANGE_H: [0.8, 1.2]
+        RESIZE_RANGE_W: [0.8, 1.2]
+        ROTATE_RANGE: [45, 45]
+        BRIGHT_RANGE: [0.8, 1.2]
+        CONTRAST_RANGE: [0.8, 1.2]
+        COLOR_RANGE: [1.0, 1.0]
+        SHARP_RANGE: [0.8, 1.2]
+    MORPH:
+        MORPH_MODE: -1
+        KERNEL_TYPE: 0
+        KERNEL_SIZE: [5, 5]
+        MORPH_ITER: 1
+
+# -----------------------------------------------------------------------------
+# LOSS
+# -----------------------------------------------------------------------------
+LOSS:
+    FUN_LIST: ['CE', 'Dice'] # , 'Focal', 'Dice'
+    WEIGHT_LIST: [1, 1, 1]
+    # CE Focal Lovasz Dice ICNetCE  ICNetFocal
+    AUTO_WEIGHT: False
+
+    FOCAL:
+        GAMA: [2.5, 2]
+        ALPHA: [1, 100]
+        SIZE_AVERAGE: True
+    LovaszLoss:
+        PER_IMAGE: False
+    CrossEntropyLoss:
+        WEIGHT: [1, 1]
+
+    ICNETLOSS:
+        WEIGHT: [1.0, 0.1]
+
+    AUX: False
+    AUX_WEIGHT: [1.0, 0.4]
+
+    SE: False
+    SE_WEIGHT: 0.2
+
+    OHEM:
+        MODE: 0
+        THRESHOLD: 0.60
+        KEEP: 2e2
+
+
+    LABEL_SMOOTHING: 0.00
+# -----------------------------------------------------------------------------
+# SOLVER
+# -----------------------------------------------------------------------------
+SOLVER:
+    LR:
+        BASE_LR: 0.01
+        ADJUST_LR: 0.2
+
+        UPDATE_POLICY: 'LR_Scheduler_Epoch'
+        LR_SCHEDULER: "cos"
+        POLY:
+            POWER: 0.9
+        STEP:
+            LR_STEP: 1
+            LR_DECAY: 0.8
+
+        CYCLE_LR: False
+        CYCLE_LR_STEP: 40
+
+    OPT:
+        OPTIMIZER: "Adamax"
+        MOMENTUM: 0.9
+        WEIGHT_DECAY: 0.0005
+
+    WARMUP:
+        WARMUP: True
+        POWER: 0.6
+        WARMUP_EPOCH: 5
+
+    DU_WARMUP:
+        WARMUP: True
+        WARMUP_LR: 0.002
+        WARMUP_EPOCH: 5
+# ---------------------------------------------------------------------------- #
+# TRAIN
+# ---------------------------------------------------------------------------- #
+TRAIN:
+    FOCAL_INIT: # refer: www.treeney.com/2019/04/23/focal-loss-retinanet/
+        WITH_FOCAL_INIT: False
+        PI: 0.01
+    START_EPOCH: 1
+    END_EPOCH: 500
+    BATCH_SIZE: 2
+
+    AMP: True
+    ACCUMULATION_STEPS: 1
+    ADAP_LR:
+        LOSS_ERROR_THR: 20.0
+        LR_DECAY: 0.8
+    DATA_SAMPLER:
+        CUSTOM: False
+        LOOP_LOADER: True
+        SAMPLE_NUMS: [8, 20, 20]
+    FT:
+        RESUME: False
+        CHECKPATH: './runs/cihuan-cicai/psp-resnet18/cicai-1/checkpoint.pth.tar'
+        CONTINUE_TRAIN: False
+
+    CHECKNAME: "yantai-4" #dc-3-new-crop-5
+
+# ---------------------------------------------------------------------------- #
+# VAL
+# ---------------------------------------------------------------------------- #
+VAL:
+    BATCH_SIZE: 8
+    VAL_START_EPOCH: 1
+    VAL_FREQUENCY: 1
+
+    IN_SIZE:
+        MODE: 'crop'        # full, crop, resize
+        # SIZE: [1024, 1024]  # h, w
+        SIZE: [256, 256]  # h, w
+
+    COM_F1: True
+    BEST_TYPE: 'F1'
+    METRIC:
+        TYPE: 'pix_iof'     # pix_iof, pix_iou, box_iof, box_iou
+        THRESHOLD: [0, 0.3]
+    DEFECT_FILTER:
+        STATION: False
+        TYPE: ''            ## box, area, minRect
+        SIZE_ALL: [16, 16]  ## [h, w]
+        SIZE_STATION: [{
+                    }]
+
+# ---------------------------------------------------------------------------- #
+# OTHERS
+# ---------------------------------------------------------------------------- #
+CUDA: True
+GPU: [0]
+SEED: 1
+MODEL_ZOO: ""
+EVAL: False
+NO_VAL: False
+TEST_FOLDER: ""
