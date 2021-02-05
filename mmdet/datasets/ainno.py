@@ -12,19 +12,13 @@ from .xml_style import XMLDataset
 
 
 @DATASETS.register_module()
-class DrinkDataset(XMLDataset):
+class AinnoDataset(XMLDataset):
 
     CLASSES = ['class_{}'.format(i) for i in range(26)]
 
     def __init__(self, **kwargs):
-        super(DrinkDataset, self).__init__(**kwargs)
-        if 'VOC2007' in self.img_prefix:
-            self.year = 2007
-        elif 'VOC2012' in self.img_prefix:
-            self.year = 2012
-        else:
-            self.year = 2012
-            # raise ValueError('Cannot infer dataset year from img_prefix')
+        super(AinnoDataset, self).__init__(**kwargs)
+
 
     def load_annotations(self, ann_file):
         """Load annotation from XML style ann_file.
@@ -101,10 +95,7 @@ class DrinkDataset(XMLDataset):
         iou_thrs = [iou_thr] if isinstance(iou_thr, float) else iou_thr
         if metric == 'mAP':
             assert isinstance(iou_thrs, list)
-            if self.year == 2007:
-                ds_name = 'voc07'
-            else:
-                ds_name = self.CLASSES
+            ds_name = self.CLASSES
             mean_aps = []
             for iou_thr in iou_thrs:
                 print_log(f'\n{"-" * 15}iou_thr: {iou_thr}{"-" * 15}')

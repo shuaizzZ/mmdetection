@@ -29,7 +29,7 @@ from mmdet.utils import collect_env, get_root_logger
 
 
 def merge_to_mmcfg_from_mvcfg(mmcfg, mvcfg):
-    return mmcfg
+    # return mmcfg
     def modify_if_exist(mmpara, mmfields, mvpara, mvfields):
         for i in range(len(mvfields)):
             mmfield = mmfields[i]
@@ -37,10 +37,10 @@ def merge_to_mmcfg_from_mvcfg(mmcfg, mvcfg):
             if mvpara.get(mvfield, None):
                 mmpara[mmfield] = mvpara.get(mvfield)
     ## model
-    mmcfg.img_norm_cfg.type = "BN"
+    mmcfg.norm_cfg.type = "BN"
     for module, config in mmcfg.model.items():
-        if isinstance(config, dict) and 'img_norm_cfg' in config.keys():
-            mmcfg._cfg_dict['model'][module]['img_norm_cfg']['type'] = mmcfg.img_norm_cfg.type
+        if isinstance(config, dict) and 'norm_cfg' in config.keys():
+            mmcfg._cfg_dict['model'][module]['norm_cfg']['type'] = mmcfg.norm_cfg.type
 
     ## num_classes
     mmcfg.classes = mvcfg.DATASETS.CLASSES
@@ -59,52 +59,15 @@ def merge_to_mmcfg_from_mvcfg(mmcfg, mvcfg):
             mmcfg.model[key]['num_classes'] = num_classes
 
     ## dataset
-    if mmcfg.data_root != mvcfg.DATASETS.ROOT:
-        mmcfg.data_root = mvcfg.DATASETS.ROOT
+    mmcfg.data_root = mvcfg.DATASETS.ROOT
+    mmcfg.dataset_type = mvcfg.DATASETS.TYPE
     for mode in ['train', 'val', 'test']:
         modify_if_exist(mmcfg._cfg_dict['data'][mode], ['type'],
                         mmcfg._cfg_dict, ['dataset_type'])
-        for para in ['data_root', 'dataset', 'classes', 'labels']:
+        for para in ['data_root', 'dataset', 'classes']:
             modify_if_exist(mmcfg._cfg_dict['data'][mode], [para],
                             mmcfg._cfg_dict, [para])
 
-    ## pipeline train
-    # mmcfg.crop_size = mvcfg.DATASETS.AUGMENT.CROP_SIZE
-    # option_para = {'Relabel': ['labels'],
-    #                'MVCrop': ['crop_size'],}
-    # for i, trans_dict in enumerate(mmcfg.train_pipeline):
-    #     trans_type = trans_dict.type
-    #     if trans_type in option_para.keys():
-    #         modify_if_exist(mmcfg._cfg_dict['train_pipeline'][i],
-    #                         option_para[trans_type],
-    #                         mmcfg._cfg_dict,
-    #                         option_para[trans_type])
-    # mmcfg.data.train.pipeline = mmcfg.train_pipeline
-
-    ## pipeline val
-    # option_para = {'Relabel': ['labels'],
-    #                'MVCrop': ['crop_size'],}
-    # for i, trans_dict in enumerate(mmcfg.val_pipeline):
-    #     if trans_dict.type != 'MultiScaleFlipAug':
-    #         continue
-    #     for j, aug_dict in enumerate(mmcfg.val_pipeline[i].transforms):
-    #         if aug_dict.type in option_para.keys():
-    #             modify_if_exist(mmcfg._cfg_dict['val_pipeline'][i].transforms[j],
-    #                             option_para[aug_dict.type],
-    #                             mmcfg._cfg_dict,
-    #                             option_para[aug_dict.type])
-    # mmcfg.data.val.pipeline = mmcfg.val_pipeline
-
-    ## pipeline test
-    # option_para = {'MVCrop': ['crop_size'],}
-    # for i, trans_dict in enumerate(mmcfg.test_pipeline):
-    #     trans_type = trans_dict.type
-    #     if trans_type in option_para.keys():
-    #         modify_if_exist(mmcfg._cfg_dict['test_pipeline'][i],
-    #                         option_para[trans_type],
-    #                         mmcfg._cfg_dict,
-    #                         option_para[trans_type])
-    # mmcfg.data.test.pipeline = mmcfg.test_pipeline
 
     # mmcfg.data.samples_per_gpu = mvcfg.TRAIN.BATCH_SIZE
     # mmcfg.data.workers_per_gpu = 0
