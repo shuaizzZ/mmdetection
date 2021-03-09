@@ -14,7 +14,13 @@ try:
     from mmcv.utils import Config, DictAction, get_git_hash
     from mmcv.parallel import MMDataParallel
 
-from mmdet.utils import collect_env, get_root_logger
+    from mmdet import __version__
+    from mmdet.apis import set_random_seed, trainer_detector
+    from mmdet.apis.test import mv_single_gpu_test
+    from mmdet.apis.pytorch2onnx import pytorch2onnx
+    from mmdet.datasets import build_dataset, build_dataloader
+    from mmdet.models import build_detector
+    from mmdet.utils import collect_env, get_root_logger
 except Exception as ex:
     ex_type, ex_val, ex_stack = sys.exc_info()
     print('ex_type:',ex_type)
