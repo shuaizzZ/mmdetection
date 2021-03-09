@@ -1,35 +1,36 @@
 import traceback
 
-# try:
-import os
-import sys
-import time
-import copy
-import shutil
-import os.path as osp
+try:
+    import os
+    import sys
+    import time
+    import copy
+    import shutil
+    import os.path as osp
 
-import torch
-import mmcv
-from mmcv.runner import init_dist, load_checkpoint
-from mmcv.utils import Config, DictAction, get_git_hash
-from mmcv.parallel import MMDataParallel
+    import torch
+    import mmcv
+    from mmcv.runner import init_dist, load_checkpoint
+    from mmcv.utils import Config, DictAction, get_git_hash
+    from mmcv.parallel import MMDataParallel
 
-from mmdet import __version__
-from mmdet.apis import set_random_seed, trainer_detector
-from mmdet.datasets import build_dataset, build_dataloader
-from mmdet.models import build_detector
-from mmdet.utils import collect_env, get_root_logger
+    from mmdet import __version__
+    from mmdet.apis import set_random_seed, trainer_detector
+    from mmdet.apis.test import mv_single_gpu_test
+    from mmdet.apis.pytorch2onnx import pytorch2onnx
+    from mmdet.datasets import build_dataset, build_dataloader
+    from mmdet.models import build_detector
+    from mmdet.utils import collect_env, get_root_logger
 
-# except Exception as ex:
-#     ex_type, ex_val, ex_stack = sys.exc_info()
-#     print('ex_type:',ex_type)
-#     print('ex_val:',ex_val)
-#     for stack in traceback.extract_tb(ex_stack):
-#         print(stack)
+except Exception as ex:
+    ex_type, ex_val, ex_stack = sys.exc_info()
+    print('ex_type:',ex_type)
+    print('ex_val:',ex_val)
+    for stack in traceback.extract_tb(ex_stack):
+        print(stack)
 
 
 def merge_to_mmcfg_from_mvcfg(mmcfg, mvcfg):
-    # return mmcfg
     def modify_if_exist(mmpara, mmfields, mvpara, mvfields):
         for i in range(len(mvfields)):
             mmfield = mmfields[i]
@@ -103,7 +104,6 @@ class ainnovision():
         mv_config_path = os.path.join(self.py_dir, mv_config_file)
         mvcfg = Config.fromfile(mv_config_path)
         # mmseg config
-        # mm_config_path = '../configs/pspnet/pspnet_r50-d8_yantai_st12.py'
         mm_config_file = "mm_det.py"
         mm_config_path = os.path.join(self.py_dir, mm_config_file)
         mmcfg = Config.fromfile(mm_config_path)
@@ -207,7 +207,6 @@ class ainnovision():
         mv_config_path = os.path.join(self.py_dir, mv_config_file)
         mvcfg = Config.fromfile(mv_config_path)
         # mmseg config
-        # mm_config_path = '../configs/pspnet/pspnet_r50-d8_yantai_st12.py'
         mm_config_file = "mm_det.py"
         mm_config_path = os.path.join(self.py_dir, mm_config_file)
         mmcfg = Config.fromfile(mm_config_path)
@@ -246,7 +245,7 @@ class ainnovision():
         if not distributed:
             model = MMDataParallel(model, device_ids=[0])
             mv_single_gpu_test(model, data_loader, runstate=runstate,
-                               draw_contours=True, out_dir=cfg.data_root)
+                               show=True, out_dir=cfg.data_root)
 
     def convert(self, runstate, mode=0):
         try:
@@ -264,7 +263,6 @@ class ainnovision():
         mv_config_path = os.path.join(self.py_dir, mv_config_file)
         mvcfg = Config.fromfile(mv_config_path)
         # mmseg config
-        # mm_config_path = '../configs/pspnet/pspnet_r50-d8_yantai_st12.py'
         mm_config_file = "mm_det.py"
         mm_config_path = os.path.join(self.py_dir, mm_config_file)
         mmcfg = Config.fromfile(mm_config_path)
