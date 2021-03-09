@@ -336,7 +336,7 @@ def eval_map(det_results,
             tpfp_fn,
             zip(cls_dets, cls_gts, cls_gts_ignore,
                 [iou_thr for _ in range(num_imgs)],
-                [area_ranges for _ in range(num_imgs)]))
+                [area_ranges for _ in range(num_imgs)]), 1)
         tp, fp = tuple(zip(*tpfp))
         # calculate gt number of each scale
         # ignored gts or gts beyond the specific scale are not counted

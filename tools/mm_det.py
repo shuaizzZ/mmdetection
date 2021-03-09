@@ -58,7 +58,8 @@ model = dict(
 # ======================================= dataset settings ======================================= #
 dataset_type = 'AinnoDataset'
 # data_root = '/root/public02/manuag/zhangshuai/datasets/coco/'
-data_root = '/root/public02/manuag/zhangshuai/data/drink/'
+# data_root = '/root/public02/manuag/zhangshuai/data/drink/'
+data_root = 'D:/work/data/drink/'
 
 classes = ['background', 'abnormal']
 labels = [0, 1]

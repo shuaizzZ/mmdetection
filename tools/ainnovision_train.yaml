@@ -20,7 +20,6 @@ DATASETS:
 #    ROOT: '/root/public02/manuag/zhangshuai/data/ainno-example/bottle_example'
 #    ROOT: '/root/public02/manuag/zhangshuai/data/ainno-example/dongci_example'
 #    ROOT: 'D:\work\manuvision-platform\bottle\train'
-    ROOT: '/root/public02/manuag/zhangshuai/data/drink/'
     TYPE: "AinnoDataset"   ## YantaiDataset
     DATASET: "yantai-12_v2345_unq_1008"
     CLASSES: ['background', 'abnormal'] # liewen , 'quekuai', 'zhazhi', 'pingmianbuping', 'loumo'

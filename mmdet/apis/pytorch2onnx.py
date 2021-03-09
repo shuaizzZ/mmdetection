@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 import onnx
-import onnxruntime as rt
+# import onnxruntime as rt
 import torch
 
 from mmdet.core import (build_model_from_cfg, generate_inputs_and_wrap_model,

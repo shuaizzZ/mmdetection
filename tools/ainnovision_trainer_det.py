@@ -14,14 +14,7 @@ try:
     from mmcv.utils import Config, DictAction, get_git_hash
     from mmcv.parallel import MMDataParallel
 
-    from mmdet import __version__
-    from mmdet.apis import set_random_seed, trainer_detector
-    from mmdet.apis.test import mv_single_gpu_test
-    from mmdet.apis.pytorch2onnx import pytorch2onnx
-    from mmdet.datasets import build_dataset, build_dataloader
-    from mmdet.models import build_detector
-    from mmdet.utils import collect_env, get_root_logger
-
+from mmdet.utils import collect_env, get_root_logger
 except Exception as ex:
     ex_type, ex_val, ex_stack = sys.exc_info()
     print('ex_type:',ex_type)
@@ -37,42 +30,20 @@ def merge_to_mmcfg_from_mvcfg(mmcfg, mvcfg):
             mvfield = mvfields[i]
             if mvpara.get(mvfield, None):
                 mmpara[mmfield] = mvpara.get(mvfield)
-    ## model
-    mmcfg.norm_cfg.type = "BN"
-    for module, config in mmcfg.model.items():
-        if isinstance(config, dict) and 'norm_cfg' in config.keys():
-            mmcfg._cfg_dict['model'][module]['norm_cfg']['type'] = mmcfg.norm_cfg.type
-
-    ## num_classes
-    mmcfg.classes = mvcfg.DATASETS.CLASSES
-    mmcfg.labels = mvcfg.DATASETS.LABELS
-
-    num_classes = max(mmcfg.labels) + 1
-    if len(mmcfg.classes) < num_classes:
-        for i in range(num_classes - len(mmcfg.classes)):
-            mmcfg.classes.append('unnamed_cls{}'.format(i+len(mmcfg.classes)+1))
-    elif len(mmcfg.classes) > num_classes:
-        mmcfg.classes = mmcfg.classes[:len(mmcfg.classes) - num_classes]
-    # modify num_classes in model
-    mmcfg.num_classes = num_classes
-    for key, val in mmcfg.model.items():
-        if 'num_classes' in val:
-            mmcfg.model[key]['num_classes'] = num_classes
-
-    ## dataset
-    mmcfg.data_root = mvcfg.DATASETS.ROOT
-    mmcfg.dataset_type = mvcfg.DATASETS.TYPE
-    for mode in ['train', 'val', 'test']:
-        modify_if_exist(mmcfg._cfg_dict['data'][mode], ['type'],
-                        mmcfg._cfg_dict, ['dataset_type'])
-        for para in ['data_root', 'dataset', 'classes']:
-            modify_if_exist(mmcfg._cfg_dict['data'][mode], [para],
-                            mmcfg._cfg_dict, [para])
 
 
     # mmcfg.data.samples_per_gpu = mvcfg.TRAIN.BATCH_SIZE
-    # mmcfg.data.workers_per_gpu = 0
+    mmcfg.data.workers_per_gpu = 0
 
+
+    ## dataset
+    mmcfg.data_root = mvcfg.DATASETS.ROOT
+    for mode in ['train', 'val', 'test']:
+        modify_if_exist(mmcfg._cfg_dict['data'][mode], ['type'],
+                        mmcfg._cfg_dict, ['dataset_type'])
+        for para in ['data_root']:
+            modify_if_exist(mmcfg._cfg_dict['data'][mode], [para],
+                            mmcfg._cfg_dict, [para])
     ## schedule
     mmcfg.total_epochs = mvcfg.TRAIN.END_EPOCH
     ## runtime
@@ -108,6 +79,7 @@ class ainnovision():
         mm_config_path = os.path.join(self.py_dir, mm_config_file)
         mmcfg = Config.fromfile(mm_config_path)
         cfg = merge_to_mmcfg_from_mvcfg(mmcfg, mvcfg)
+        print('cfg.data_root : {}'.format(cfg.data_root))
 
         # set cudnn_benchmark
         if cfg.get('cudnn_benchmark', False):
