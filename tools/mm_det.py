@@ -106,22 +106,22 @@ data = dict(
     train=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root,
-        img_prefix=data_root,
+        ann_file='',
+        # img_prefix=data_root,
         pipeline=train_pipeline,
         filter_empty_gt=filter_empty_gt),
     val=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root,
-        img_prefix=data_root,
+        ann_file='',
+        # img_prefix=data_root,
         pipeline=test_pipeline,
         filter_empty_gt=filter_empty_gt),
     test=dict(
         type=dataset_type,
         data_root=data_root,
-        ann_file=data_root,
-        img_prefix=data_root,
+        ann_file='',
+        # img_prefix=data_root,
         pipeline=test_pipeline,
         filter_empty_gt=filter_empty_gt))
 # coco_year = '2014'
@@ -159,7 +159,7 @@ lr_config = dict(
 # ======================================= runtime settings ======================================= #
 total_epochs = 273
 evaluation = dict(interval=1, metric=['mAP'])
-checkpoint_config = dict(interval=1)
+checkpoint_config = dict(by_epoch=True, interval=1, max_keep_ckpts=3)
 # yapf:disable
 log_config = dict(
     interval=50,

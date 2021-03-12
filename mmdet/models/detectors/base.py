@@ -344,7 +344,7 @@ class BaseDetector(nn.Module, metaclass=ABCMeta):
             bboxes,
             labels,
             segms,
-            class_names=self.CLASSES,
+            # class_names=self.CLASSES,
             score_thr=score_thr,
             bbox_color=bbox_color,
             text_color=text_color,

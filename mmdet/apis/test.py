@@ -12,6 +12,8 @@ from mmcv.runner import get_dist_info
 
 from mmdet.core import encode_mask_results
 
+import numpy as np
+import xml.etree.ElementTree as ET
 
 def single_gpu_test(model,
                     data_loader,
@@ -65,6 +67,62 @@ def single_gpu_test(model,
             prog_bar.update()
     return results
 
+# 增加换行符
+def __indent(elem, level=0):
+    i = "\n" + level*"\t"
+    if len(elem):
+        if not elem.text or not elem.text.strip():
+            elem.text = i + "\t"
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+        for elem in elem:
+            __indent(elem, level+1)
+        if not elem.tail or not elem.tail.strip():
+            elem.tail = i
+    else:
+        if level and (not elem.tail or not elem.tail.strip()):
+            elem.tail = i
+
+def res2xml(results, xml_dir, img_metas, default_angle=0):
+    for i, (result, img_meta) in enumerate(zip(results, img_metas)):
+        h, w, c = img_meta['img_shape']
+        filename = img_meta['ori_filename'].split('/')[-1]
+        filename = filename[:-3] + 'xml'
+        xml_path = osp.join(xml_dir, filename)
+
+        root = ET.Element("annotation")
+        tree = ET.ElementTree(root)
+
+        filename_ele = ET.SubElement(root, "filename")
+        filename_ele.text = filename
+        __indent(root)
+
+        size_ele = ET.SubElement(root, "size")
+        for text, value in zip(["height", "width", "depth"], [h, w, c]):
+            element = ET.SubElement(size_ele, text)
+            element.text = str(value)
+            __indent(size_ele)
+        __indent(root)
+
+        for label, objects in enumerate(result):
+            for object in objects:
+                if len(object) == 5:
+                    object = np.insert(object, 4, default_angle)
+                object_ele = ET.SubElement(root, "object")
+                name_ele = ET.SubElement(object_ele, "name")
+                name_ele.text = str(label)
+                __indent(object_ele)
+                bndbox_ele = ET.SubElement(object_ele, "bndbox")
+                for i, (text, value) in enumerate(
+                        zip(["xmin", "ymin", "xmax", "ymax", "angle", "score"], object)):
+                    element = ET.SubElement(bndbox_ele, text)
+                    element.text = str(int(value)) if i < 5 else str(value)
+                    __indent(bndbox_ele)
+                __indent(object_ele)
+        __indent(root)
+        tree.write(xml_path, encoding='utf-8', xml_declaration=True)
+
+
 def mv_single_gpu_test(model,
                     data_loader,
                     runstate,
@@ -75,12 +133,17 @@ def mv_single_gpu_test(model,
     results = []
     dataset = data_loader.dataset
     prog_bar = mmcv.ProgressBar(len(dataset))
+    xml_dir = osp.join(out_dir, 'xml_results')
+    mmcv.mkdir_or_exist(xml_dir)
     for i, data in enumerate(data_loader):
         with torch.no_grad():
             result = model(return_loss=False, rescale=True, **data)
+        res2xml(result, xml_dir, data['img_metas'][0].data[0])
 
         batch_size = len(result)
         if show or out_dir:
+            show_dir = osp.join(out_dir, 'show_results')
+            mmcv.mkdir_or_exist(show_dir)
             if batch_size == 1 and isinstance(data['img'][0], torch.Tensor):
                 img_tensor = data['img'][0]
             else:
@@ -96,8 +159,9 @@ def mv_single_gpu_test(model,
                 ori_h, ori_w = img_meta['ori_shape'][:-1]
                 img_show = mmcv.imresize(img_show, (ori_w, ori_h))
 
-                if out_dir:
-                    out_file = osp.join(out_dir, img_meta['ori_filename'])
+                if show_dir:
+                    img_name = img_meta['ori_filename'].split('/')[-1]
+                    out_file = osp.join(show_dir, img_name)
                 else:
                     out_file = None
 

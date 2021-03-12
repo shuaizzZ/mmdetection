@@ -125,7 +125,7 @@ class TrainerCheckpointHook(Hook):
         for name, best_val in runner.best_eval_res.items():
             if name not in runner.best_metrics:
                 continue
-            cur_val = runner.log_buffer.output[name][runner.best_type]
+            cur_val = runner.log_buffer.output[name]
             runner.cur_eval_res[name] = cur_val
             # if cur_val==1, that is mean : value = (0+smooth)/(0+smooth) = 1,
             # we thank that this should't be the best value.
@@ -133,7 +133,8 @@ class TrainerCheckpointHook(Hook):
                 runner.best_eval_res[name] = [cur_val, runner.epoch+ 1]
                 runner.save_checkpoint(
                     self.out_dir, save_optimizer=self.save_optimizer,
-                    filename_tmpl=f'{name}_best_model.pth.tar', **self.args)
+                    # filename_tmpl=f'{name}_best_model.pth.tar', **self.args)
+                    filename_tmpl = f'F1_best_model.pth.tar', ** self.args)
 
                 runner.logger.info(f'Saving {name}_best checkpoint at {runner.epoch + 1} epochs')
             runner.log_buffer.output['best_pred_'+name] = runner.best_eval_res[name]

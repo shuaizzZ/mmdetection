@@ -1,6 +1,35 @@
 import traceback
 
-try:
+mv=0
+if mv:
+    try:
+        import os
+        import sys
+        import time
+        import copy
+        import shutil
+        import os.path as osp
+
+        import torch
+        import mmcv
+        from mmcv.runner import init_dist, load_checkpoint
+        from mmcv.utils import Config, DictAction, get_git_hash
+        from mmcv.parallel import MMDataParallel
+
+        from mmdet import __version__
+        from mmdet.apis import set_random_seed, trainer_detector
+        from mmdet.apis.test import mv_single_gpu_test
+        from mmdet.apis.pytorch2onnx import pytorch2onnx
+        from mmdet.datasets import build_dataset, build_dataloader
+        from mmdet.models import build_detector
+        from mmdet.utils import collect_env, get_root_logger
+    except Exception as ex:
+        ex_type, ex_val, ex_stack = sys.exc_info()
+        print('ex_type:',ex_type)
+        print('ex_val:',ex_val)
+        for stack in traceback.extract_tb(ex_stack):
+            print(stack)
+else:
     import os
     import sys
     import time
@@ -21,12 +50,6 @@ try:
     from mmdet.datasets import build_dataset, build_dataloader
     from mmdet.models import build_detector
     from mmdet.utils import collect_env, get_root_logger
-except Exception as ex:
-    ex_type, ex_val, ex_stack = sys.exc_info()
-    print('ex_type:',ex_type)
-    print('ex_val:',ex_val)
-    for stack in traceback.extract_tb(ex_stack):
-        print(stack)
 
 
 def merge_to_mmcfg_from_mvcfg(mmcfg, mvcfg):
@@ -215,10 +238,9 @@ class ainnovision():
             shuffle=False)
 
         # build the model and load checkpoint
-        model = build_segmentor(cfg.model, train_cfg=None, test_cfg=cfg.test_cfg)
+        model = build_detector(cfg.model, train_cfg=None)
         model_path = osp.join(cfg.work_dir, 'F1_best_model.pth.tar')
         checkpoint = load_checkpoint(model, model_path, map_location='cpu')
-        config = checkpoint['meta']['config']
 
         if not distributed:
             model = MMDataParallel(model, device_ids=[0])
@@ -282,6 +304,6 @@ if __name__ == "__main__":
 
     mv = ainnovision()
     mv.init()
-    mv.train_py(runstate)
-    # mv.inference_py(runstate)
+    # mv.train_py(runstate)
+    mv.inference_py(runstate)
     # mv.convert_py(runstate, 0)
