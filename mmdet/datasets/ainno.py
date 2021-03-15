@@ -7,7 +7,7 @@ from collections import OrderedDict
 
 from mmcv.utils import print_log
 
-from mmdet.core import eval_map, eval_recalls
+from mmdet.core import eval_map, eval_recalls, eval_map_single_proc
 from .builder import DATASETS
 from .xml_style import XMLDataset
 
@@ -215,7 +215,8 @@ class AinnoDataset(XMLDataset):
             mean_aps = []
             for iou_thr in iou_thrs:
                 print_log(f'\n{"-" * 15}iou_thr: {iou_thr}{"-" * 15}')
-                mean_ap, _ = eval_map(
+                mean_ap, _ = eval_map_single_proc(
+                # mean_ap, _ = eval_map(
                     results,
                     annotations,
                     scale_ranges=None,

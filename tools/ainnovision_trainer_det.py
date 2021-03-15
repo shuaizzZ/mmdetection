@@ -108,7 +108,6 @@ class ainnovision():
         mm_config_path = os.path.join(self.py_dir, mm_config_file)
         mmcfg = Config.fromfile(mm_config_path)
         cfg = merge_to_mmcfg_from_mvcfg(mmcfg, mvcfg)
-        print('cfg.data_root : {}'.format(cfg.data_root))
 
         # set cudnn_benchmark
         if cfg.get('cudnn_benchmark', False):
@@ -304,6 +303,6 @@ if __name__ == "__main__":
 
     mv = ainnovision()
     mv.init()
-    # mv.train_py(runstate)
-    mv.inference_py(runstate)
+    mv.train_py(runstate)
+    # mv.inference_py(runstate)
     # mv.convert_py(runstate, 0)
