@@ -1,6 +1,6 @@
 import traceback
 
-mv=0
+mv=1
 if mv:
     try:
         import os
@@ -19,7 +19,7 @@ if mv:
         from mmdet import __version__
         from mmdet.apis import set_random_seed, trainer_detector
         from mmdet.apis.test import mv_single_gpu_test
-        from mmdet.apis.pytorch2onnx import pytorch2onnx
+        from mmdet.apis.pytorch2onnx import pytorch2onnx, _convert_batchnorm
         from mmdet.datasets import build_dataset, build_dataloader
         from mmdet.models import build_detector
         from mmdet.utils import collect_env, get_root_logger
@@ -46,7 +46,7 @@ else:
     from mmdet import __version__
     from mmdet.apis import set_random_seed, trainer_detector
     from mmdet.apis.test import mv_single_gpu_test
-    from mmdet.apis.pytorch2onnx import pytorch2onnx
+    from mmdet.apis.pytorch2onnx import pytorch2onnx, _convert_batchnorm
     from mmdet.datasets import build_dataset, build_dataloader
     from mmdet.models import build_detector
     from mmdet.utils import collect_env, get_root_logger
@@ -256,7 +256,7 @@ class ainnovision():
             for stack in traceback.extract_tb(ex_stack):
                 print(stack)
 
-    def convert_py(self, runstate, mode=0):
+    def convert_py1(self, runstate, mode=0):
         # manuvision config
         mv_config_file = "ainnovision_train.yaml"
         mv_config_path = os.path.join(self.py_dir, mv_config_file)
@@ -273,22 +273,51 @@ class ainnovision():
 
         # build the model and load checkpoint
         model_cfg.pretrained = None
-        segmentor = build_segmentor(
-            model_cfg, train_cfg=None, test_cfg=cfg.test_cfg)
+        detector = build_detector(
+            model_cfg, train_cfg=None)
         # convert SyncBN to BN
-        segmentor = _convert_batchnorm(segmentor)
-        checkpoint = load_checkpoint(segmentor, checkpath, map_location='cpu')
+        detector = _convert_batchnorm(detector)
+        checkpoint = load_checkpoint(detector, checkpath, map_location='cpu')
 
         # conver model to onnx file
         input_shape = (1, 3, cfg.convert_size[0], cfg.convert_size[1])
         output_file = osp.join(cfg.work_dir, 'F1_best_model.onnx')
         pytorch2onnx(
-            segmentor,
+            detector,
             input_shape,
             opset_version=10,
             show=True,
             output_file=output_file,
             verify=True)
+
+    def convert_py(self, runstate, mode=0):
+        # manuvision config
+        mv_config_file = "ainnovision_train.yaml"
+        mv_config_path = os.path.join(self.py_dir, mv_config_file)
+        mvcfg = Config.fromfile(mv_config_path)
+        # mmseg config
+        mm_config_file = "mm_det.py"
+        mm_config_path = os.path.join(self.py_dir, mm_config_file)
+        mmcfg = Config.fromfile(mm_config_path)
+        cfg = merge_to_mmcfg_from_mvcfg(mmcfg, mvcfg)
+
+        checkpath = osp.join(cfg.work_dir, 'F1_best_model.pth.tar')
+        example = os.listdir(osp.join(cfg.data_root, 'JPEGImages'))[3]
+        example_img = osp.join(cfg.data_root, 'JPEGImages', example)
+        # example_img = np.ones((cfg.convert_size[0], cfg.convert_size[1], 3))
+
+        # conver model to onnx file
+        input_shape = (1, 3, cfg.convert_size[0], cfg.convert_size[1])
+        output_file = osp.join(cfg.work_dir, 'F1_best_model.onnx')
+        pytorch2onnx(
+            cfg,
+            checkpath,
+            input_img=example_img,
+            input_shape=input_shape,
+            opset_version=10,
+            show=True,
+            output_file=output_file,
+            normalize_cfg=cfg.img_norm_cfg)
 
     def uninit(self):
         print("python ainnovision uninit")
@@ -303,6 +332,6 @@ if __name__ == "__main__":
 
     mv = ainnovision()
     mv.init()
-    mv.train_py(runstate)
+    # mv.train_py(runstate)
     # mv.inference_py(runstate)
-    # mv.convert_py(runstate, 0)
+    mv.convert_py(runstate, 0)

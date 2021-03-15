@@ -176,3 +176,5 @@ resume_from = None
 workflow = [('train', 1)]
 work_dir = './test'
 
+# ======================================= convert ======================================= #
+convert_size = (1024, 1024)

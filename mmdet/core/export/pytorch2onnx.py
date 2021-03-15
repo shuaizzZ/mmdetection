@@ -4,6 +4,7 @@ import mmcv
 import numpy as np
 import torch
 from mmcv.runner import load_checkpoint
+from mmcv import Config
 
 
 def generate_inputs_and_wrap_model(config_path, checkpoint_path, input_config):
@@ -70,7 +71,10 @@ def build_model_from_cfg(config_path, checkpoint_path):
     """
     from mmdet.models import build_detector
 
-    cfg = mmcv.Config.fromfile(config_path)
+    if isinstance(config_path, Config):
+        cfg = config_path
+    else:
+        cfg = mmcv.Config.fromfile(config_path)
     # import modules from string list.
     if cfg.get('custom_imports', None):
         from mmcv.utils import import_modules_from_strings
