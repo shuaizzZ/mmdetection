@@ -304,6 +304,7 @@ class ainnovision():
         checkpath = osp.join(cfg.work_dir, 'F1_best_model.pth.tar')
         example = os.listdir(osp.join(cfg.data_root, 'JPEGImages'))[3]
         example_img = osp.join(cfg.data_root, 'JPEGImages', example)
+        print(example_img)
         # example_img = np.ones((cfg.convert_size[0], cfg.convert_size[1], 3))
 
         # conver model to onnx file
@@ -314,7 +315,7 @@ class ainnovision():
             checkpath,
             input_img=example_img,
             input_shape=input_shape,
-            opset_version=10,
+            opset_version=11,
             show=True,
             output_file=output_file,
             normalize_cfg=cfg.img_norm_cfg)
